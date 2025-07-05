@@ -9,20 +9,62 @@
 
 # Importa o módulo
 import random
+from datetime import datetime 
+
+datetimeFormat = '%Y-%m-%d %H:%M:%S'
+
+historico = []
 
 # Cria a lista para armanzenamento das dificuldades
-dificuldades = ['easy', 'medium', 'hard']
+dificuldades = ['fácil', 'média', 'difícil']
 
-# Função para apresentação do menu
-def menu():
+# Menu principal
+def menuPrincipal():
 	print("=" * 30)
 	print("     CONTADOR DE DÍGITO")
 	print("=" * 30)
-	print('[1] - Fácil')
-	print('[2] - Média')
-	print('[3] - Difícil')
-	print('[0] - Sair do jogo')
-	print('\n')
+	print("[1] Jogar")
+	print("[2] Histórico")
+	print("[0] Sair")
+	print()
+
+# Menu de dificuldades
+def menuDificuldade():
+	print("=" * 30)
+	print("     ESCOLHA A DIFICULDADE")
+	print("=" * 30)
+	print("[1] - Fácil")
+	print("[2] - Média")
+	print("[3] - Difícil")
+	print("[0] - Voltar ao menu principal")
+	print()
+
+def gerarHistorico():
+	print('=' * 30)
+	print('	  HISTÓRICO')
+	print('=' * 30)
+ 
+	if not historico:
+		print("Não há histórico ainda.\n")
+		return
+
+	ultimos = historico[-5:]
+	for item in ultimos:
+		print(item)
+	print()
+
+def gravarHistorico():
+	if not historico:
+		return
+
+	with open('historico.txt', 'a') as f:
+		now = datetime.now()
+  
+		f.write(f'[{now.strftime(datetimeFormat)}]')
+		f.writelines(historico)
+		f.write('\n')
+
+	print('Histórico registrado!')
  
 # Função para geração de número aleatório para retorná-lo junto com sua quantidade
 def gerarQtdAleatoria(dificuldade):
@@ -31,56 +73,85 @@ def gerarQtdAleatoria(dificuldade):
 	try:
 		# Apresentando as possibilidades de acordo com o valor associado
 		match dificuldade:
-			case 'easy':
+			case 'fácil':
 				max = 1000
-			case 'medium':
+			case 'média':
 				max = 10000
-			case 'hard':
+			case 'difícil':
 				max = 100000
 			case _:
 				# Erro associado para evitar digitação de strings
 				raise ValueError('dificuldade inválida')
-	# Erro geral
 	except Exception as e:
 		print('ERRO:', e)
-	# Importação de um valor aleatório
+
+	# Gera um número aleatório em um intervalo definido
 	numero = random.randint(1, max)
+
 	# Contagem da quantidade de caracteres do número transformado em string
 	qtdChars = len(str(numero))
+
 	# Retorno os valores, agora tranformados em elementos de uma lista
 	return [numero, qtdChars]
-# Função para pedir qual dificuldade será escolhida e fazer a contagem de chances do usuário para acertar
-def logica():
-  # Função já definida é chamada
-	menu()
-	# Obtém a opção escolhida pelo usuário
-	opcao = int(input('Digite uma dificuldade: '))
-	# Verifica o sinal do número para assim armazenar o valor
-	if opcao <= 0:
-		print('Fim do jogo')
-		return
-	# Obtem a dificuldade
-	dificuldade = dificuldades[opcao - 1]
 
-	[numero, quantidade] = gerarQtdAleatoria(dificuldade)
-	print(f'Um número foi gerado na dificuldade {dificuldade}!')
+# Lógica do jogo
+def jogar():
+	while True:
+		menuDificuldade()
 
-	vidas = 3
+		# Obtém a opção escolhida pelo usuário
+		opcao = int(input('Digite uma dificuldade: '))
+ 
+		if opcao == 0:
+			return
 
-	# Loop até ter tentivas
-	while vidas > 0:
-		# Obtem o chute do usuário
-		chute = int(input('Qual a quantidade de algarismos no número? '))
+		if 1 <= opcao <= 3:
+			# Obtem a dificuldade
+			dificuldade = dificuldades[opcao - 1]
 
-		# Verifica se o usuário acertou
-		if chute == quantidade:
-			print('\nVocê acertou a quantidade!')
+			[numero, quantidade] = gerarQtdAleatoria(dificuldade)
+			print(f'Um número foi gerado na dificuldade {dificuldade}!')
+
+			vidas = 3
+
+			# Loop até ter tentivas
+			while vidas > 0:
+				chute = int(input('Qual a quantidade de algarismos no número? '))
+
+				# Verifica se o usuário acertou
+				if chute == quantidade:
+					print('\nVocê acertou a quantidade!')
+					historico.append(f'\nDificuldade {dificuldade}, Resultado: ACERTOU, Número: {numero}')
+					break
+				else:
+					vidas -= 1
+					print('\nTente novamente. Vidas restantes:', vidas)
+
+			if vidas == 0:
+				print(f'\nAcabaram as tentivas. O número era: {numero}')
+				historico.append(f'\nDificuldade {dificuldade}, Resultado: ERROU, Número: {numero}')
+
+		else:
+			print('Opção de dificuldade inválida')
+
+def main():
+	while True:
+		menuPrincipal()
+		try:
+			opcao = int(input("Escolha uma opção: "))
+		except ValueError:
+			print("Entrada inválida. Digite um número.")
+			continue
+
+		if opcao == 1:
+			jogar()
+		elif opcao == 2:
+			gerarHistorico()
+		elif opcao == 0:
+			gravarHistorico()
+			print("Saindo do jogo.")
 			break
+		else:
+			print("Opção inválida.")
 
-		# O usuário não acertou
-		print('\nTente novamente')
-		vidas -= 1
-
-	print('\nO número era:', numero)
-
-logica()
+main()
